@@ -1,5 +1,5 @@
 module.exports = {
-	'botToken': '',
+	'slackToken': '', // Slack auth token
 	'githubToken': '',
 	'channels': {
 		{id}: {name}

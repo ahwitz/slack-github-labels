@@ -18,8 +18,9 @@ github.authenticate({
     token: config.githubToken
 });
 
-var rtm = new RtmClient(config.botToken);
+var rtm = new RtmClient(config.slackToken);
 var myID;
+var channels = {};
 
 var GithubClient = require("./response-lib.js").GithubClient;
 var githubClient = new GithubClient(rtm, github);
@@ -27,27 +28,17 @@ var githubClient = new GithubClient(rtm, github);
 // The client will emit an RTM.AUTHENTICATED event on successful connection, with the `rtm.start` payload if you want to cache it
 rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, function (rtmStartData) {
     myID = rtmStartData.self.id;
+    for (var cIdx = 0; cIdx < rtmStartData.channels.length; cIdx++)
+        channels[rtmStartData.channels[cIdx].id] = rtmStartData.channels[cIdx].name;
     console.log(`Logged in as ${rtmStartData.self.name} of team ${rtmStartData.team.name}.`);
 });
 
 rtm.on(CLIENT_EVENTS.RTM.RAW_MESSAGE, function handleRtmMessage(rawMessage) {
     var message = JSON.parse(rawMessage);
-    if (message.type === 'message' && message.user !== myID)
+    if ((message.type === 'message') && (message.user !== myID) && message.text)
     {
         console.log(rawMessage);
-        var activeChannel = message.channel;
-        if (activeChannel in config.channels)
-        {
-            if (message.text.indexOf("!count") === 0)
-                githubClient.countForUser(message.text.split(" ")[1], message.text.split(" ")[2], activeChannel);
-            if (message.text.indexOf("!repos") === 0)
-            {
-                var repos = [];
-                for (var repoName in config.repos)
-                    repos.push(repoName + ": " + config.repos[repoName].owner + "/" + config.repos[repoName].repo);
-                rtm.sendMessage(repos.join("\n"), activeChannel);
-            }
-        }
+        githubClient.execute(message);
     }
 });
 
