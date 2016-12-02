@@ -7,7 +7,7 @@ module.exports.GithubClient = function(rtm, github)
     this.github = github;
 
     this.helpObj = {
-        'For all options': 'paramName1:paramVal1|paramName2:paramVal2 etc.'
+        'For all options': 'paramName1:paramVal1|paramName2:paramVal2 etc as per https://mikedeboer.github.io/node-github/'
     }; // Filled in above each method
     this.actions = {}; // List of functions to execute
 
@@ -64,7 +64,7 @@ module.exports.GithubClient = function(rtm, github)
         self.rtm.sendMessage(repos.join("\n"), message.channel);
     };
 
-    this.helpObj["!count"] = "for all parameters `field:description`, feeds directly into https://mikedeboer.github.io/node-github/#api-issues-getForRepo\n- `repo:_____`, which is pulled from the results of !repos and feeds into both `owner` and `repo` in the above link.\n- per_page overridden to 100 no matter what.";
+    this.helpObj["!count"] = "https://mikedeboer.github.io/node-github/#api-issues-getForRepo, returns count only";
     this.actions["!count"] = function(message)
     {
         var ghParams = self.parseGHParams(message);
@@ -73,7 +73,45 @@ module.exports.GithubClient = function(rtm, github)
         self.github.issues.getForRepo(ghParams, function(err, res)
         {
             if (res)
-                self.rtm.sendMessage(res.length + " issues match that query.", message.channel);
+                self.rtm.sendMessage((res.length === 100 ? res.length + "+" : res.length) + " issues match that query.", message.channel);
+            else
+            {
+                console.log(err);
+                self.rtm.sendMessage("Github told me you messed up. It said: '" + err.message + "'.", message.channel);
+            }
+        });
+    };
+
+    this.helpObj["!issues"] = "same as !count, but provides information about issues";
+    this.actions["!issues"] = function(message)
+    {
+        var ghParams = self.parseGHParams(message);
+        if (!ghParams) return;
+
+        self.github.issues.getForRepo(ghParams, function(err, res)
+        {
+            if (res)
+            {
+                var issues = [];
+                for (var issue of res)
+                {
+                    var assignees = [];
+                    for (var assignee of issue.assignees)
+                        assignees.push(assignee.login);
+
+                    var labels = [];
+                    for (var label of issue.labels)
+                        labels.push(label.name);
+
+                    issues.push("*" + issue.title + "*" + 
+                        "\n>Assignees: " + assignees.join(", ") + 
+                        "\n>Labels: " + labels.join(", ") + 
+                        "\n>Milestone: " + issue.milestone.title + "(" + issue.milestone.number + ")" +
+                        "\n>" + issue.html_url
+                    );
+                }
+                self.rtm.sendMessage(issues.length > 0 ? issues.join("\n\n") : "No issues match that query.", message.channel);
+            }
             else
             {
                 console.log(err);
@@ -91,7 +129,7 @@ module.exports.GithubClient = function(rtm, github)
         self.rtm.sendMessage(helpMessages.join("\n"), message.channel);
     };
 
-    this.helpObj["!labels"] = "displays all labels for `repo:_____`";
+    this.helpObj["!labels"] = "https://mikedeboer.github.io/node-github/#api-issues-getLabels";
     this.actions["!labels"] = function(message)
     {
         var ghParams = self.parseGHParams(message);
@@ -114,7 +152,7 @@ module.exports.GithubClient = function(rtm, github)
         });
     };
 
-    this.helpObj["!milestones"] = "displays all milestones for `repo:_____`";
+    this.helpObj["!milestones"] = "https://mikedeboer.github.io/node-github/#api-issues-getMilestones";
     this.actions["!milestones"] = function(message)
     {
         var ghParams = self.parseGHParams(message);
