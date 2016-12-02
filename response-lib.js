@@ -77,15 +77,49 @@ module.exports.GithubClient = function(rtm, github)
         self.rtm.sendMessage(helpMessages.join("\n"), message.channel);
     };
 
-    this.helpObj["!labels"] = "displays all labels for repo:_____";
+    this.helpObj["!labels"] = "displays all labels for `repo:_____`";
     this.actions["!labels"] = function(message)
     {
-        self.rtm.sendMessage("Not yet implemented.", message.channel);
+        var ghParams = self.parseGHParams(message);
+        if (!ghParams) return;
+
+        self.github.issues.getLabels(ghParams, function(err, res)
+        {
+            if (res)
+            {
+                var labels = [];
+                for (var label of res)
+                    labels.push(label.name);
+                self.rtm.sendMessage(labels.length > 0 ? labels.join("\n") : "No labels found for " + ghParams.owner + "/" + ghParams.repo + ".", message.channel);
+            }
+            else
+            {
+                console.log(err);
+                self.rtm.sendMessage("Github told me you messed up. It said: '" + err.message + "'.", message.channel);
+            }
+        });
     };
 
-    this.helpObj["!milestones"] = "displays all milestones for repo:_____";
+    this.helpObj["!milestones"] = "displays all milestones for `repo:_____`";
     this.actions["!milestones"] = function(message)
     {
-        self.rtm.sendMessage("Not yet implemented.", message.channel);
+        var ghParams = self.parseGHParams(message);
+        if (!ghParams) return;
+
+        self.github.issues.getMilestones(ghParams, function(err, res)
+        {
+            if (res)
+            {
+                var milestones = [];
+                for (var milestone of res)
+                    milestones.push(milestone.title + "(" + milestone.number + ") - " + milestone.open_issues + "/" + (milestone.open_issues + milestone.closed_issues) + " issues open.");
+                self.rtm.sendMessage(milestones.length > 0 ? milestones.join("\n") : "No milestones found for " + ghParams.owner + "/" + ghParams.repo + ".", message.channel);
+            }
+            else
+            {
+                console.log(err);
+                self.rtm.sendMessage("Github told me you messed up. It said: '" + err.message + "'.", message.channel);
+            }
+        });
     };
 };

@@ -35,11 +35,7 @@ rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, function (rtmStartData) {
 
 rtm.on(CLIENT_EVENTS.RTM.RAW_MESSAGE, function handleRtmMessage(rawMessage) {
     var message = JSON.parse(rawMessage);
-    if ((message.type === 'message') && (message.user !== myID) && message.text)
-    {
-        console.log(rawMessage);
-        githubClient.execute(message);
-    }
+    if ((message.type === 'message') && (message.user !== myID) && message.text && (message.text.indexOf("!") === 0)) githubClient.execute(message);
 });
 
 rtm.start();
