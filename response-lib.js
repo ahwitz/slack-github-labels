@@ -6,7 +6,9 @@ module.exports.GithubClient = function(rtm, github)
     this.rtm = rtm;
     this.github = github;
 
-    this.helpObj = {}; // Filled in above each method
+    this.helpObj = {
+        'For all options': 'paramName1:paramVal1|paramName2:paramVal2 etc.'
+    }; // Filled in above each method
     this.actions = {}; // List of functions to execute
 
     this.execute = function(message)
@@ -16,6 +18,29 @@ module.exports.GithubClient = function(rtm, github)
             this.actions[which](message);
         else
             self.rtm.sendMessage("Did not recognize that message. Supported requests: " + Object.keys(this.actions).join(", "), message.channel);
+    };
+
+    this.parseGHParams = function(message)
+    {
+        var messageText = message.text.replace(/^![^ ]* /, "");
+        var ghParams = {};
+        var blocks = messageText.split("|");
+        for (var bIdx = 0; bIdx < blocks.length; bIdx++)
+        {
+            var block = blocks[bIdx].split(":");
+            ghParams[block[0]] = block.splice(1, block.length).join(":");
+        }
+
+        if (!('repo' in ghParams))
+        {
+            self.rtm.sendMessage("This endpoint requires `repo:_____`, one of the values from !repos", message.channel);
+            return false;
+        }
+
+        ghParams['owner'] = config.repos[ghParams.repo].owner;
+        ghParams['repo'] = config.repos[ghParams.repo].repo;
+        ghParams['per_page'] = 100;
+        return ghParams;
     };
 
     // this.setupHooks();
@@ -42,24 +67,13 @@ module.exports.GithubClient = function(rtm, github)
     this.helpObj["!count"] = "for all parameters `field:description`, feeds directly into https://mikedeboer.github.io/node-github/#api-issues-getForRepo\n- `repo:_____`, which is pulled from the results of !repos and feeds into both `owner` and `repo` in the above link.\n- per_page overridden to 100 no matter what.";
     this.actions["!count"] = function(message)
     {
-        var ghParams = {};
-        var blocks = message.text.split(" ");
-        for (var bIdx = 0; bIdx < blocks.length; bIdx++)
-        {
-            var block = blocks[bIdx].split(":");
-            ghParams[block[0]] = block[1];
-        }
+        var ghParams = self.parseGHParams(message);
+        if (!ghParams) return;
 
-        if (!('repo' in ghParams))
-            return self.rtm.sendMessage("!count requires repo:{_____}, one of the values from !repos", message.channel);
-
-        ghParams['owner'] = config.repos[ghParams.repo].owner;
-        ghParams['repo'] = config.repos[ghParams.repo].repo;
-        ghParams['per_page'] = 100;
         self.github.issues.getForRepo(ghParams, function(err, res)
         {
             if (res)
-                self.rtm.sendMessage(res.length + " issues that match that query.", message.channel);
+                self.rtm.sendMessage(res.length + " issues match that query.", message.channel);
             else
             {
                 console.log(err);
@@ -72,8 +86,8 @@ module.exports.GithubClient = function(rtm, github)
     this.actions["!help"] = function(message)
     {
         var helpMessages = [];
-        for (var helpID in this.helpObj)
-            helpMessages.push(helpID + " - " + this.helpObj[helpID]);
+        for (var helpID in self.helpObj)
+            helpMessages.push(helpID + " - " + self.helpObj[helpID]);
         self.rtm.sendMessage(helpMessages.join("\n"), message.channel);
     };
 
