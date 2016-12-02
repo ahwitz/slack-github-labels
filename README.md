@@ -1,0 +1,1 @@
+This is a Slack bot that passes parsed messages to the Github API. It'll do more soon.
