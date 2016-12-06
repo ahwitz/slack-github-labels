@@ -22,7 +22,7 @@ var rtm = new RtmClient(config.slackToken);
 var myID;
 var channels = {};
 
-var GithubClient = require("./response-lib.js").GithubClient;
+var GithubClient = require("./lib/response-lib.js").GithubClient;
 var githubClient = new GithubClient(rtm, github);
 
 // The client will emit an RTM.AUTHENTICATED event on successful connection, with the `rtm.start` payload if you want to cache it
