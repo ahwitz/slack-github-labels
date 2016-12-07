@@ -1,0 +1,12 @@
+{
+	'(username)': {
+		'(stageName)': [
+			{
+				'destination': '(columnID)'
+			},
+			{
+				'destination': '(columnID)'
+			}
+		]
+	}
+}
