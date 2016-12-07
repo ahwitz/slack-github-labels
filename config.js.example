@@ -9,5 +9,6 @@ module.exports = {
 			'owner': {owner},
 			'repo': {repo}
 		}
-	}
+	},
+	'defaultRepo': (name)
 };

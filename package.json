@@ -11,6 +11,6 @@
   "dependencies": {
     "@slack/client": "^3.6.1",
     "express": "^4.14.0",
-    "github": "^7.0.0"
+    "github": "^7.0.1"
   }
 }
