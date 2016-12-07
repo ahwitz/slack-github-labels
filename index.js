@@ -21,15 +21,21 @@ github.authenticate({
 var rtm = new RtmClient(config.slackToken);
 var myID;
 var channels = {};
+var users = {};
 
 var GithubClient = require("./lib/response-lib.js").GithubClient;
-var githubClient = new GithubClient(rtm, github);
+var githubClient = new GithubClient(rtm, github, channels, users);
 
 // The client will emit an RTM.AUTHENTICATED event on successful connection, with the `rtm.start` payload if you want to cache it
 rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, function (rtmStartData) {
     myID = rtmStartData.self.id;
+
+    for (var cIdx = 0; cIdx < rtmStartData.users.length; cIdx++)
+        users[rtmStartData.users[cIdx].id] = rtmStartData.users[cIdx].name;
+
     for (var cIdx = 0; cIdx < rtmStartData.channels.length; cIdx++)
         channels[rtmStartData.channels[cIdx].id] = rtmStartData.channels[cIdx].name;
+    
     console.log(`Logged in as ${rtmStartData.self.name} of team ${rtmStartData.team.name}.`);
 });
 
