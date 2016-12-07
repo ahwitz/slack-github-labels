@@ -1,12 +1,8 @@
 {
-	'(username)': {
-		'(stageName)': [
-			{
-				'destination': '(columnID)'
-			},
-			{
-				'destination': '(columnID)'
-			}
-		]
+	'(slack user ID)': {
+		'(stageName)': {
+			'destinations': [],
+			'assignees': []
+		}
 	}
 }
